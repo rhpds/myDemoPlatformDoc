@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta http-equiv="refresh" content="0; url=index.html#workflows"/>
+  <title>Redirecting...</title>
+  <script>
+    window.onload = function() {
+      window.location.replace('index.html');
+      setTimeout(() => {
+        window.parent && window.parent.postMessage && window.parent.postMessage('switchTab:workflows','*');
+      }, 100);
+    };
+  </script>
+</head>
+<body style="background:#1e1e1e;color:#888;font-family:sans-serif;padding:20px">
+  <p>Loading <strong style="color:#0078d4">workflows</strong> tab &mdash; <a href="index.html" style="color:#0078d4">click here</a> if not redirected.</p>
+</body>
+</html>

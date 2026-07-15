@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Babylon + AgnosticD Architecture</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #1e1e1e;
+      --bg-card:   #252526;
+      --bg-hover:  #2d2d2d;
+      --border:    #3a3a3a;
+      --border2:   #444;
+      --text:      #cccccc;
+      --text-dim:  #888;
+      --text-faint:#555;
+      --accent:    #0078d4;
+      --accent-bg: #0a2d4a;
+      --mono:      'Consolas', 'Menlo', monospace;
+      --sans:      -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.6; }
+
+    /* ── Layout ── */
+    .page { max-width: 1080px; margin: 0 auto; padding: 28px 24px 60px; }
+
+    .header { margin-bottom: 20px; }
+    .header h1 { font-size: 26px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .header p  { color: var(--text-dim); font-size: 13px; }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .tab-btn {
+      padding: 5px 16px; border-radius: 20px; border: 1px solid var(--border2);
+      background: transparent; color: var(--text-dim); font-size: 13px; cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .tab-btn:hover  { background: var(--bg-hover); color: var(--text); }
+    .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Divider ── */
+    hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+    /* ── Stat strip ── */
+    .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .stat-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px;
+      padding: 14px 8px; text-align: center;
+    }
+    .stat-value { font-size: 28px; font-weight: 700; color: var(--accent); line-height: 1.1; }
+    .stat-label { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+    /* ── 3-col summary cards ── */
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px;
+      overflow: hidden; margin-bottom: 12px;
+    }
+    .card-header {
+      padding: 7px 14px; font-size: 12px; font-weight: 600; color: var(--text-dim);
+      background: var(--bg-hover); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; user-select: none;
+    }
+    .card-header .chevron { transition: transform 0.2s; font-size: 10px; }
+    .card-header.collapsed .chevron { transform: rotate(-90deg); }
+    .card-body { padding: 14px; }
+    .card-body.hidden { display: none; }
+
+    /* ── Badge / pill ── */
+    .pill {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      border: 1px solid var(--border2); font-size: 11px; color: var(--text-dim);
+      margin: 2px;
+    }
+
+    /* ── Code ── */
+    code {
+      font-family: var(--mono); font-size: 12px;
+      background: var(--bg-hover); border: 1px solid var(--border);
+      border-radius: 3px; padding: 1px 5px; color: #9cdcfe;
+    }
+    pre {
+      font-family: var(--mono); font-size: 12px; background: var(--bg-hover);
+      border: 1px solid var(--border); border-radius: 5px; padding: 14px;
+      overflow-x: auto; color: #9cdcfe; line-height: 1.7;
+    }
+
+    /* ── Tables ── */
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table thead th {
+      text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--text-faint);
+      border-bottom: 1px solid var(--border); padding: 8px 12px;
+    }
+    table tbody tr { border-bottom: 1px solid var(--border); }
+    table tbody tr:last-child { border-bottom: none; }
+    table tbody tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+    table tbody td { padding: 9px 12px; vertical-align: top; color: var(--text); }
+    table tbody td:first-child { color: #9cdcfe; font-family: var(--mono); font-size: 12px; }
+
+    /* ── Callout ── */
+    .callout {
+      background: #0a2d4a; border-left: 3px solid var(--accent); border-radius: 4px;
+      padding: 12px 16px; margin-bottom: 16px;
+    }
+    .callout strong { color: #60b8f7; display: block; margin-bottom: 4px; font-size: 13px; }
+    .callout p { color: var(--text-dim); font-size: 13px; }
+
+    /* ── Section headings ── */
+    h2 { font-size: 16px; font-weight: 600; color: #fff; margin: 24px 0 12px; }
+    h3 { font-size: 13px; font-weight: 600; color: var(--text-dim);
+         text-transform: uppercase; letter-spacing: 0.06em; margin: 20px 0 8px; }
+
+    /* ── Step list ── */
+    .step-list { display: flex; flex-direction: column; gap: 6px; }
+    .step-row { display: flex; gap: 10px; align-items: flex-start; }
+    .step-num { min-width: 22px; font-size: 12px; font-weight: 700; color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+    .step-text { font-size: 13px; color: var(--text-dim); }
+
+    /* ── Legend ── */
+    .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); }
+    .legend-dot { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+
+    /* ── Diagram box ── */
+    .diagram-box {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px;
+      padding: 16px; overflow-x: auto;
+    }
+    .mermaid { display: flex; justify-content: center; }
+
+    /* ── Layer table ── */
+    .layer-table td:nth-child(2) { font-family: var(--mono); font-size: 12px; color: #9cdcfe; }
+    .layer-table td:nth-child(3) { font-style: italic; color: var(--text-dim); }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      .stat-grid { grid-template-columns: repeat(3, 1fr); }
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>Babylon + AgnosticD Architecture</h1>
+    <p>Red Hat Demo Platform (demo.redhat.com) &mdash; catalog, provisioning orchestration, and environment lifecycle.</p>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
+    <button class="tab-btn" onclick="switchTab('components')">Components</button>
+    <button class="tab-btn" onclick="switchTab('crds')">CRDs</button>
+    <button class="tab-btn" onclick="switchTab('workflows')">Workflows</button>
+    <button class="tab-btn" onclick="switchTab('integration')">Integration</button>
+  </div>
+
+  <hr />
+
+  <!-- ═══════════════════════════ OVERVIEW ═══════════════════════════ -->
+  <div id="tab-overview" class="tab-panel active">
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-value">8</div><div class="stat-label">Babylon Operators</div></div>
+      <div class="stat-card"><div class="stat-value">2</div><div class="stat-label">External Operators</div></div>
+      <div class="stat-card"><div class="stat-value">4</div><div class="stat-label">CRD Groups</div></div>
+      <div class="stat-card"><div class="stat-value">17+</div><div class="stat-label">Total CRDs</div></div>
+      <div class="stat-card"><div class="stat-value">100+</div><div class="stat-label">AgnosticD Configs</div></div>
+    </div>
+
+    <hr />
+
+    <div class="summary-grid">
+      <div class="card">
+        <div class="card-header">AgnosticV</div>
+        <div class="card-body">
+          <p style="color:var(--text-dim);font-size:13px">Git-backed catalog definition repository. Hierarchical YAML + AsciiDoc describing catalog items, deployer pins, access control, and message templates. Consumed by agnosticv-operator — never executed directly. Stages (dev/test/prod/event) keep items aligned with tagged releases.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Babylon</div>
+        <div class="card-body">
+          <p style="color:var(--text-dim);font-size:13px">OpenShift control plane for RHDP (demo.redhat.com). Provides catalog UX, claim/pool orchestration (Poolboy), Ansible action engine (Anarchy + governor), workshop management, email notifications, ratings, Bookbag lab UIs, and cost tracking. Deployed via Helm.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">AgnosticD</div>
+        <div class="card-body">
+          <p style="color:var(--text-dim);font-size:13px">Ansible-based, cloud-agnostic deployer. 100+ configs under ansible/configs/ — each a staged playbook set (pre_infra → infra → post_infra → software). Triggered by Babylon via AAP/Tower jobs. Supports AWS, Azure, GCP, OSP, IBM, Equinix, OpenShift CNV, VMware, and more.</p>
+        </div>
+      </div>
+    </div>
+
+    <h2>Architecture Diagram</h2>
+    <p style="color:var(--text-dim);font-size:12px;margin-bottom:12px">Top-to-bottom data flow: Git catalog definition → Babylon CRs → user order → resource binding → Ansible action → provisioning → state feedback.</p>
+
+    <div class="diagram-box">
+      <div class="mermaid">
+flowchart TD
+  AV["AgnosticV Repo\n(YAML catalog defs)"]
+  AVO["agnosticv-operator"]
+  CI["CatalogItem"]
+  RP["ResourceProvider"]
+  AG["AnarchyGovernor"]
+  UI["Catalog UI + API"]
+  RC["ResourceClaim\n(user order)"]
+  PB["Poolboy\n(resource broker)"]
+  RH["ResourceHandle"]
+  AS["AnarchySubject"]
+  AN["Anarchy Runner\n(governor roles)"]
+  AAP["AAP / Dark Tower\n(Tower job)"]
+  AD["AgnosticD\nansible/configs/"]
+  PD["provision_data\n(URLs, creds)"]
+  NT["Notifier\n(email)"]
+  WM["workshop-manager"]
+
+  AV -->|clone / poll| AVO
+  AVO --> CI & RP & AG
+  CI -->|browse / order| UI
+  UI -->|creates| RC
+  RC & RP --> PB
+  PB -->|binds| RH
+  RH -->|creates| AS
+  AG -->|defines actions| AS
+  AS --> AN
+  AN -->|launches job| AAP
+  AAP -->|checkout + run| AD
+  AD -->|writes| PD
+  PD -->|updates state| AS
+  AS -->|reflects on| RC
+  PD --> NT
+  WM -->|scales claims| RC
+
+  style AV fill:#3d3d3d,color:#ddd,stroke:#666
+  style AVO fill:#003d73,color:#fff,stroke:#0066cc
+  style CI fill:#003d73,color:#fff,stroke:#0066cc
+  style UI fill:#003d73,color:#fff,stroke:#0066cc
+  style NT fill:#003d73,color:#fff,stroke:#0066cc
+  style WM fill:#003d73,color:#fff,stroke:#0066cc
+  style RP fill:#1a3a1a,color:#fff,stroke:#33aa33
+  style RC fill:#1a3a1a,color:#fff,stroke:#33aa33
+  style PB fill:#1a3a1a,color:#fff,stroke:#33aa33
+  style RH fill:#1a3a1a,color:#fff,stroke:#33aa33
+  style AG fill:#3a2a00,color:#fff,stroke:#cc8800
+  style AS fill:#3a2a00,color:#fff,stroke:#cc8800
+  style AN fill:#3a2a00,color:#fff,stroke:#cc8800
+  style AAP fill:#2a1a3a,color:#fff,stroke:#9933cc
+  style AD fill:#2a1a3a,color:#fff,stroke:#9933cc
+  style PD fill:#3a1a1a,color:#fff,stroke:#cc3333
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#003d73;border:1px solid #0066cc"></div> Babylon (operators + UI)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#1a3a1a;border:1px solid #33aa33"></div> Poolboy (resource broker)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#3a2a00;border:1px solid #cc8800"></div> Anarchy (action engine)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2a1a3a;border:1px solid #9933cc"></div> AAP / AgnosticD</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#3a1a1a;border:1px solid #cc3333"></div> provision_data feedback</div>
+    </div>
+
+    <hr />
+
+    <h2>Layer Summary</h2>
+    <div class="tbl-wrap">
+      <table class="layer-table">
+        <thead><tr><th>Layer</th><th>System</th><th>Analogy</th></tr></thead>
+        <tbody>
+          <tr><td>Catalog definition</td><td>AgnosticV (YAML)</td><td>Menu / recipe book</td></tr>
+          <tr><td>Order management</td><td>Babylon (Catalog UI + API)</td><td>Restaurant ordering system</td></tr>
+          <tr><td>Resource brokering</td><td>Poolboy (CRDs)</td><td>Table reservation / prep station</td></tr>
+          <tr><td>Action execution</td><td>Anarchy + babylon_anarchy_governor</td><td>Kitchen workflow engine</td></tr>
+          <tr><td>Job runner</td><td>AAP / Dark Tower</td><td>Kitchen appliances</td></tr>
+          <tr><td>Provisioner</td><td>AgnosticD (ansible/configs/)</td><td>Recipes being executed</td></tr>
+          <tr><td>Cloud accounts</td><td>Sandbox API</td><td>Pre-allocated ingredients</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ COMPONENTS ═══════════════════════════ -->
+  <div id="tab-components" class="tab-panel">
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">All Babylon operators run on OpenShift. External operators (Poolboy, Anarchy) are deployed alongside Babylon but maintained in separate repositories.</p>
+
+    <script>
+      const OPERATORS = [
+        { name:"agnosticv-operator", type:"Kopf (Python)", repo:"redhat-cop/babylon — agnosticv-operator/", purpose:"Clones/polls AgnosticV git repo; merges YAML hierarchy; creates & reconciles CatalogItem, ResourceProvider, and AnarchyGovernor CRs.", crds:["AgnosticVRepo","AgnosticVComponent","CatalogItem","ResourceProvider","AnarchyGovernor"] },
+        { name:"Poolboy", type:"Go operator", repo:"redhat-cop/poolboy (external)", purpose:"Resource broker: matches ResourceClaims to ResourceHandles (or ResourcePools for pre-provisioned envs). Creates AnarchySubjects when bound.", crds:["ResourceProvider","ResourceClaim","ResourceHandle","ResourcePool"] },
+        { name:"Anarchy", type:"Go operator", repo:"redhat-cop/anarchy (external)", purpose:"Event-driven Ansible action runner. Watches AnarchySubjects for state changes and runs AnarchyActions (provision/start/stop/destroy/status) via AnarchyRuns.", crds:["AnarchyGovernor","AnarchySubject","AnarchyAction","AnarchyRun"] },
+        { name:"workshop-manager", type:"Kopf (Python)", repo:"redhat-cop/babylon — workshop-manager/", purpose:"Manages Workshops, WorkshopProvisions, and MultiWorkshops. Scales ResourceClaims for workshop seats and handles user-seat assignment.", crds:["Workshop","WorkshopProvision","WorkshopUserAssignment","MultiWorkshop"] },
+        { name:"notifier", type:"Kopf + SMTP", repo:"redhat-cop/babylon — notifier/", purpose:"Watches ResourceClaims for state transitions and sends templated emails: provision-ready, provision-failed, start/stop, retirement warning, deletion.", crds:["ResourceClaim (watch only)"] },
+        { name:"catalog-manager", type:"Kopf (Python)", repo:"redhat-cop/babylon — catalog-manager/", purpose:"Enriches CatalogItems with aggregate data: user ratings, disabled flags, last-successful-provision timestamps from the ratings DB.", crds:["CatalogItem"] },
+        { name:"service-access-manager", type:"Kopf (Python)", repo:"redhat-cop/babylon — service-access-manager/", purpose:"Reconciles ServiceAccess and ServiceAccessConfig CRs for access-control reporting and policy enforcement on services.", crds:["ServiceAccess","ServiceAccessConfig"] },
+        { name:"lab-ui-manager", type:"Kopf (Python)", repo:"redhat-cop/babylon — lab-ui-manager/", purpose:"Watches ResourceClaims for bookbag flags and manages BookbagBuild / BookbagDeployment CRs for the full build→deploy lifecycle of lab UIs.", crds:["BookbagBuild","BookbagDeployment"] },
+        { name:"cost-tracker", type:"Kopf (Python)", repo:"redhat-cop/babylon — cost-tracker/", purpose:"Estimates AWS sandbox costs by inspecting ResourceClaim provision_data and annotating claims with cost projections.", crds:["ResourceClaim (watch only)"] },
+        { name:"Catalog API (babylon-api)", type:"Python Flask", repo:"redhat-cop/babylon — catalog/api/", purpose:"REST/proxy API layer between Catalog UI and OpenShift API server. Handles auth, ordering, parameter validation, service listing, and admin operations.", crds:["CatalogItem","ResourceClaim (via API)"] },
+      ];
+      document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('operators-container');
+        OPERATORS.forEach(op => {
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `
+            <div class="card-header" onclick="toggleCard(this)">
+              <span>${op.name}</span>
+              <span style="display:flex;align-items:center;gap:8px">
+                <span class="pill">${op.type}</span>
+                <span class="chevron">▼</span>
+              </span>
+            </div>
+            <div class="card-body">
+              <p style="color:var(--text-dim);font-size:13px;margin-bottom:10px">${op.purpose}</p>
+              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+                <span style="font-size:11px;color:var(--text-faint);font-weight:600">REPO:</span>
+                <code>${op.repo}</code>
+              </div>
+              <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
+                <span style="font-size:11px;color:var(--text-faint);font-weight:600">CRDs:</span>
+                ${op.crds.map(c => `<span class="pill">${c}</span>`).join('')}
+              </div>
+            </div>`;
+          container.appendChild(div);
+        });
+      });
+    </script>
+    <div id="operators-container"></div>
+  </div>
+
+  <!-- ═══════════════════════════ CRDs ═══════════════════════════ -->
+  <div id="tab-crds" class="tab-panel">
+
+    <h3>gpte.redhat.com — AgnosticV operator</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>CRD</th><th>Managed by</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>AgnosticVRepo</td><td>agnosticv-operator</td><td>Defines a git repo containing AgnosticV YAML (URL, branch/tag, deploy key, poll interval).</td></tr>
+          <tr><td>AgnosticVComponent</td><td>agnosticv-operator</td><td>Merged catalog item definition for one path×stage combo. Source of truth for CatalogItem/ResourceProvider/AnarchyGovernor.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>poolboy.gpte.redhat.com — Poolboy</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>CRD</th><th>Managed by</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>ResourceProvider</td><td>Poolboy</td><td>Defines resource template(s), lifespan defaults, status Jinja, and default/allowed parameter values. One per catalog item.</td></tr>
+          <tr><td>ResourceClaim</td><td>Poolboy</td><td>User order / service instance. Lives in user namespace. Holds parameters, desired state, provision_data, and timestamps.</td></tr>
+          <tr><td>ResourceHandle</td><td>Poolboy</td><td>Bound provisioned resource. Created by Poolboy when a claim is matched (from pool or dynamically).</td></tr>
+          <tr><td>ResourcePool</td><td>Poolboy</td><td>Pre-allocated handles for fast workshop provisioning. Poolboy maintains pool size.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>anarchy.gpte.redhat.com — Anarchy</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>CRD</th><th>Managed by</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>AnarchyGovernor</td><td>Anarchy</td><td>Action definitions (provision/start/stop/destroy/status) + vars/secrets for a catalog item. One per item.</td></tr>
+          <tr><td>AnarchySubject</td><td>Anarchy</td><td>Instance of a service under a governor. Holds current_state, desired_state, and provision_data.</td></tr>
+          <tr><td>AnarchyAction</td><td>Anarchy</td><td>Record of an action execution request (provision, start, stop, etc.).</td></tr>
+          <tr><td>AnarchyRun</td><td>Anarchy</td><td>Execution record for a single AnarchyAction run (Ansible role invocation).</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>babylon.gpte.redhat.com — Babylon</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>CRD</th><th>Managed by</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>CatalogItem</td><td>agnosticv-operator</td><td>What the Catalog UI shows: metadata, parameters, access control, message templates, rating.</td></tr>
+          <tr><td>Workshop</td><td>workshop-manager</td><td>Unauthenticated workshop portal. Holds title, description, access password, and seat count.</td></tr>
+          <tr><td>WorkshopProvision</td><td>workshop-manager</td><td>Scales N ResourceClaims for a Workshop from a CatalogItem reference.</td></tr>
+          <tr><td>WorkshopUserAssignment</td><td>workshop-manager</td><td>Maps user emails to workshop seats.</td></tr>
+          <tr><td>MultiWorkshop</td><td>workshop-manager</td><td>Bundle of workshops and assets under one event schedule.</td></tr>
+          <tr><td>ServiceAccess</td><td>service-access-manager</td><td>Access reporting record for a service instance.</td></tr>
+          <tr><td>ServiceAccessConfig</td><td>service-access-manager</td><td>Policy configuration for service access control.</td></tr>
+          <tr><td>BookbagBuild</td><td>lab-ui-manager</td><td>Triggers an OpenShift build for a Bookbag lab UI image from a git repository.</td></tr>
+          <tr><td>BookbagDeployment</td><td>lab-ui-manager</td><td>Deploys a Bookbag image into the service namespace with provision_data variables.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>CRD Relationship Chain</h2>
+    <pre>AgnosticV path/.../prod.yaml
+  └─► AgnosticVComponent  (e.g. rhdp.dev-sandbox.prod)
+        ├─► CatalogItem          (catalog namespace — what the UI shows)
+        ├─► ResourceProvider     (poolboy ns — defines resource templates)
+        └─► AnarchyGovernor      (babylon-anarchy-N ns — action definitions)
+
+User orders CatalogItem
+  └─► ResourceClaim              (user namespace — the order)
+        └─► ResourceHandle       (poolboy ns — bound resource)
+              └─► AnarchySubject (anarchy ns — service instance)
+                    └─► AnarchyAction → Tower job → AgnosticD
+                          └─► provision_data → AnarchySubject → ResourceClaim.status</pre>
+  </div>
+
+  <!-- ═══════════════════════════ WORKFLOWS ═══════════════════════════ -->
+  <div id="tab-workflows" class="tab-panel">
+    <script>
+      const WORKFLOWS = [
+        { title:"A. Catalog Sync (AgnosticV → Babylon)", steps:[
+          "AgnosticVRepo CR configured with git URL, deploy key, poll interval or webhook.",
+          "agnosticv-operator clones/fetches; runs agnosticv CLI to merge YAML hierarchy: account.yaml → common.yaml → stage YAML + #includes.",
+          "Creates/updates AgnosticVComponent per path×stage (e.g. rhdp.dev-sandbox.prod).",
+          "For each component: creates/updates CatalogItem (UI metadata), ResourceProvider (lifespan, templates), and AnarchyGovernor (action definitions + job_vars).",
+          "PR webhooks allow preview of components from PR branches with isolation locks.",
+        ]},
+        { title:"B. Ordering a Lab (Individual Service)", steps:[
+          "User authenticates to Catalog UI via OAuth proxy.",
+          "Selects a CatalogItem, fills parameters (Salesforce ID, purpose, num_users, etc.).",
+          "Catalog API creates ResourceClaim with resource templates referencing the ResourceProvider.",
+          "Poolboy matches/creates ResourceHandle, creates AnarchySubject(s) referencing the AnarchyGovernor.",
+          "Anarchy runs governor 'provision' action → AAP/Tower job launched.",
+          "Tower checks out AgnosticD at __meta__.deployer.scm_ref; runs ansible/main.yml with env_type + job_vars.",
+          "AgnosticD runs staged playbooks; writes provision_data (URLs, credentials, showroom info).",
+          "AnarchySubject state → 'started'; provision_data reflected on ResourceClaim status.",
+          "Notifier sends provision-ready email; Catalog UI shows live service.",
+        ]},
+        { title:"C. Workshop / MultiWorkshop", steps:[
+          "Admin creates Workshop CR (title, description, optional password).",
+          "WorkshopProvision CR references CatalogItem + count + concurrency; optionally references ResourcePool.",
+          "workshop-manager creates N ResourceClaims to reach target count (from pool or dynamically).",
+          "WorkshopUserAssignment assigns seats; students use workshop URL (no full catalog auth required).",
+          "MultiWorkshop CR bundles multiple workshops and assets under one event.",
+        ]},
+        { title:"D. Lifecycle Management (Start / Stop / Destroy)", steps:[
+          "ResourceClaim desired-state update (or scheduled timestamp) triggers Anarchy action.",
+          "Governor schedules Tower job with AgnosticD entry: ansible/lifecycle_entry_point.yml (start/stop/status) or ansible/destroy.yml.",
+          "provision_data updated on AnarchySubject → Poolboy → ResourceClaim status.",
+          "ResourceProvider defines lifespan/retirement windows; notifier sends retirement warning + deletion emails.",
+        ]},
+        { title:"E. AgnosticD Config Execution (Inside a Job)", steps:[
+          "env_type selects configs/<env_type>/ directory in AgnosticD checkout.",
+          "setup_runtime.yml: initialise env, install requirements.",
+          "pre_infra.yml → cloud *_infrastructure_deployment.yml → post_infra.yml (VM/cluster creation).",
+          "pre_software.yml → software.yml → post_software.yml (workload installation).",
+          "Optional completion callback writes provision_data back to governor.",
+        ]},
+        { title:"F. Promotion Flow (dev → test → prod)", steps:[
+          "Developer merges feature into AgnosticD + workload repos.",
+          "agd-promote tags AgnosticD at a semver release tag.",
+          "AgnosticV dev.yaml → test.yaml → prod.yaml stage files updated with the new scm_ref.",
+          "agnosticv-operator detects AgnosticV commit → reconciles AnarchyGovernor with new job_vars (scm_ref).",
+          "Next provision picks up the tagged AgnosticD version automatically.",
+        ]},
+      ];
+      document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('workflows-container');
+        WORKFLOWS.forEach(wf => {
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `
+            <div class="card-header" onclick="toggleCard(this)">
+              <span>${wf.title}</span>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="card-body">
+              <div class="step-list">
+                ${wf.steps.map((s,i) => `
+                  <div class="step-row">
+                    <span class="step-num">${i+1}.</span>
+                    <span class="step-text">${s}</span>
+                  </div>`).join('')}
+              </div>
+            </div>`;
+          container.appendChild(div);
+        });
+      });
+    </script>
+    <div id="workflows-container"></div>
+  </div>
+
+  <!-- ═══════════════════════════ INTEGRATION ═══════════════════════════ -->
+  <div id="tab-integration" class="tab-panel">
+
+    <div class="callout">
+      <strong>Mental Model</strong>
+      <p>AgnosticV is the menu (YAML recipe book). Babylon is the restaurant system (orders, seats, queue, emails). Poolboy is table reservation (claims and pools). Anarchy + governor is the kitchen workflow engine. AAP/Dark Tower is the kitchen appliances. AgnosticD is the recipe being executed. Sandbox provides the pre-allocated ingredients (ephemeral cloud accounts/clusters).</p>
+    </div>
+
+    <h2>Integration Points</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>From</th><th>To</th><th>How</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style="color:#fff;font-family:var(--sans)">AgnosticV</td>
+            <td style="color:#fff;font-family:var(--sans)">Babylon</td>
+            <td>agnosticv-operator clones AgnosticV repo and merges YAML hierarchy → CatalogItem + ResourceProvider + AnarchyGovernor</td>
+          </tr>
+          <tr>
+            <td style="color:#fff;font-family:var(--sans)">AgnosticV</td>
+            <td style="color:#fff;font-family:var(--sans)">AgnosticD</td>
+            <td><code>__meta__.deployer</code> (type: agnosticd, scm_url, scm_ref) + job_vars (env_type, cloud_provider, workloads) pinned in stage YAML</td>
+          </tr>
+          <tr>
+            <td style="color:#fff;font-family:var(--sans)">Babylon</td>
+            <td style="color:#fff;font-family:var(--sans)">AgnosticD</td>
+            <td>Indirect: Anarchy governor → AAP Tower job template → checkout AgnosticD at scm_ref → run ansible/main.yml with extra vars from ResourceClaim</td>
+          </tr>
+          <tr>
+            <td style="color:#fff;font-family:var(--sans)">Babylon</td>
+            <td style="color:#fff;font-family:var(--sans)">Sandbox API</td>
+            <td><code>__meta__.sandboxes</code> config in AgnosticV; linked ResourceProviders for sandbox + workload; sandbox API allocates ephemeral AWS/OCP accounts</td>
+          </tr>
+          <tr>
+            <td style="color:#fff;font-family:var(--sans)">AgnosticD</td>
+            <td style="color:#fff;font-family:var(--sans)">Babylon</td>
+            <td>Tower job callback sets provision_data + current_state on AnarchySubject → Poolboy reflects on ResourceClaim status → Catalog UI shows data</td>
+          </tr>
+          <tr>
+            <td style="color:#fff;font-family:var(--sans)">Promotion tooling</td>
+            <td style="color:#fff;font-family:var(--sans)">AgnosticD + AgnosticV</td>
+            <td>agd-promote script tags AgnosticD + workload repos, updates AgnosticV prod.yaml/event.yaml with pinned scm_ref</td>
+          </tr>
+          <tr>
+            <td style="color:#fff;font-family:var(--sans)">Catalog API</td>
+            <td style="color:#fff;font-family:var(--sans)">Ratings / Admin DBs</td>
+            <td>catalog-manager enriches CatalogItems with aggregate ratings; admin API surfaces ServiceNow workshop forms and reporting data</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr />
+
+    <h2>Default Deployer Wiring</h2>
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:10px">The root <code>common.yaml</code> in AgnosticV sets the default deployer for all catalog items:</p>
+    <pre>__meta__:
+  deployer:
+    type: agnosticd
+    scm_type: git
+    scm_url: https://github.com/redhat-cop/agnosticd.git
+    # scm_ref is overridden per stage to pin a specific tag</pre>
+
+    <hr />
+
+    <h2>Promotion Flow</h2>
+    <div class="step-list">
+      <div class="step-row"><span class="step-num">1.</span><span class="step-text">Developer merges feature into AgnosticD + workload repos.</span></div>
+      <div class="step-row"><span class="step-num">2.</span><span class="step-text">agd-promote tags AgnosticD at a semver release tag.</span></div>
+      <div class="step-row"><span class="step-num">3.</span><span class="step-text">AgnosticV dev.yaml → test.yaml → prod.yaml stage files updated with the new scm_ref.</span></div>
+      <div class="step-row"><span class="step-num">4.</span><span class="step-text">agnosticv-operator detects AgnosticV commit → reconciles AnarchyGovernor with new job_vars (scm_ref).</span></div>
+      <div class="step-row"><span class="step-num">5.</span><span class="step-text">Next provision picks up the tagged AgnosticD version automatically.</span></div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { fontFamily: 'Consolas, Menlo, monospace' } });
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      const tabs = ['overview','components','crds','workflows','integration'];
+      b.classList.toggle('active', tabs[i] === name);
+    });
+    document.querySelectorAll('.tab-panel').forEach(p => {
+      p.classList.toggle('active', p.id === 'tab-' + name);
+    });
+  }
+
+  function toggleCard(header) {
+    const body = header.nextElementSibling;
+    const chevron = header.querySelector('.chevron');
+    const hidden = body.classList.toggle('hidden');
+    header.classList.toggle('collapsed', hidden);
+  }
+</script>
+</body>
+</html>
