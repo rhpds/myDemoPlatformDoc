@@ -120,14 +120,19 @@ Stage YAML overrides `scm_ref` to pin a specific tag for prod/event stability.
 OpenShift control plane for RHDP. Deployed via Helm (`helm/`) onto OpenShift. Provides:
 
 - **Catalog UI** (`catalog/ui/`) — React + PatternFly SPA: browse/order CatalogItems, manage Services, Workshops
-- **Catalog API** (`catalog/api/`) — Python Flask proxy between UI and OpenShift API; not a controller
+- **Catalog API** (`catalog/api/`) — Python aiohttp proxy between UI and OpenShift API; handles ordering, parameter validation, admin ops; not a controller
+- **Catalog OAuth Proxy** — OpenShift OAuth gate in front of Catalog UI (SSO/authentication)
+- **Catalog Redis** — session cache for the Catalog API
+- **Catalog Status** (`catalog/status/`) — nginx status/health page for catalog interfaces
 - **agnosticv-operator** — syncs AgnosticV git → CatalogItem + ResourceProvider + AnarchyGovernor
 - **workshop-manager** — Workshops, WorkshopProvisions, MultiWorkshops, seat assignment
-- **notifier** — email on provision-ready/failed, start/stop, retirement, deletion
+- **notifier** — email on provision-ready/failed, start/stop, retirement, deletion (uses Redis for dedup)
 - **catalog-manager** — enriches CatalogItems with ratings and last-successful-provision data
-- **service-access-manager** — ServiceAccess / ServiceAccessConfig CRs
+- **service-access-manager** — ServiceAccess / ServiceAccessConfig CRs; reads UserNamespace CRs for per-user RBAC
 - **lab-ui-manager** — deploys Bookbag lab UIs (BookbagBuild / BookbagDeployment)
 - **cost-tracker** — estimates AWS sandbox costs on ResourceClaims
+- **admin** — FastAPI + Vue.js admin UI/API for incident management and ServiceNow reporting
+- **ratings** — FastAPI service for catalog item ratings, consumed by catalog-manager
 
 ### AgnosticD
 

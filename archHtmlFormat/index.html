@@ -177,11 +177,11 @@
   <!-- ═══════════════════════════ OVERVIEW ═══════════════════════════ -->
   <div id="tab-overview" class="tab-panel active">
 
-    <div class="stat-grid">
-      <div class="stat-card"><div class="stat-value">8</div><div class="stat-label">Babylon Operators</div></div>
-      <div class="stat-card"><div class="stat-value">2</div><div class="stat-label">External Operators</div></div>
-      <div class="stat-card"><div class="stat-value">4</div><div class="stat-label">CRD Groups</div></div>
-      <div class="stat-card"><div class="stat-value">17+</div><div class="stat-label">Total CRDs</div></div>
+      <div class="stat-grid">
+      <div class="stat-card"><div class="stat-value">7</div><div class="stat-label">Babylon Operators</div></div>
+      <div class="stat-card"><div class="stat-value">3</div><div class="stat-label">External Operators</div></div>
+      <div class="stat-card"><div class="stat-value">5</div><div class="stat-label">CRD Groups</div></div>
+      <div class="stat-card"><div class="stat-value">20+</div><div class="stat-label">Total CRDs</div></div>
       <div class="stat-card"><div class="stat-value">100+</div><div class="stat-label">AgnosticD Configs</div></div>
     </div>
 
@@ -300,16 +300,19 @@ flowchart TD
 
     <script>
       const OPERATORS = [
-        { name:"agnosticv-operator", type:"Kopf (Python)", repo:"redhat-cop/babylon — agnosticv-operator/", purpose:"Clones/polls AgnosticV git repo; merges YAML hierarchy; creates & reconciles CatalogItem, ResourceProvider, and AnarchyGovernor CRs.", crds:["AgnosticVRepo","AgnosticVComponent","CatalogItem","ResourceProvider","AnarchyGovernor"] },
-        { name:"Poolboy", type:"Go operator", repo:"redhat-cop/poolboy (external)", purpose:"Resource broker: matches ResourceClaims to ResourceHandles (or ResourcePools for pre-provisioned envs). Creates AnarchySubjects when bound.", crds:["ResourceProvider","ResourceClaim","ResourceHandle","ResourcePool"] },
-        { name:"Anarchy", type:"Go operator", repo:"redhat-cop/anarchy (external)", purpose:"Event-driven Ansible action runner. Watches AnarchySubjects for state changes and runs AnarchyActions (provision/start/stop/destroy/status) via AnarchyRuns.", crds:["AnarchyGovernor","AnarchySubject","AnarchyAction","AnarchyRun"] },
-        { name:"workshop-manager", type:"Kopf (Python)", repo:"redhat-cop/babylon — workshop-manager/", purpose:"Manages Workshops, WorkshopProvisions, and MultiWorkshops. Scales ResourceClaims for workshop seats and handles user-seat assignment.", crds:["Workshop","WorkshopProvision","WorkshopUserAssignment","MultiWorkshop"] },
-        { name:"notifier", type:"Kopf + SMTP", repo:"redhat-cop/babylon — notifier/", purpose:"Watches ResourceClaims for state transitions and sends templated emails: provision-ready, provision-failed, start/stop, retirement warning, deletion.", crds:["ResourceClaim (watch only)"] },
-        { name:"catalog-manager", type:"Kopf (Python)", repo:"redhat-cop/babylon — catalog-manager/", purpose:"Enriches CatalogItems with aggregate data: user ratings, disabled flags, last-successful-provision timestamps from the ratings DB.", crds:["CatalogItem"] },
-        { name:"service-access-manager", type:"Kopf (Python)", repo:"redhat-cop/babylon — service-access-manager/", purpose:"Reconciles ServiceAccess and ServiceAccessConfig CRs for access-control reporting and policy enforcement on services.", crds:["ServiceAccess","ServiceAccessConfig"] },
-        { name:"lab-ui-manager", type:"Kopf (Python)", repo:"redhat-cop/babylon — lab-ui-manager/", purpose:"Watches ResourceClaims for bookbag flags and manages BookbagBuild / BookbagDeployment CRs for the full build→deploy lifecycle of lab UIs.", crds:["BookbagBuild","BookbagDeployment"] },
-        { name:"cost-tracker", type:"Kopf (Python)", repo:"redhat-cop/babylon — cost-tracker/", purpose:"Estimates AWS sandbox costs by inspecting ResourceClaim provision_data and annotating claims with cost projections.", crds:["ResourceClaim (watch only)"] },
-        { name:"Catalog API (babylon-api)", type:"Python Flask", repo:"redhat-cop/babylon — catalog/api/", purpose:"REST/proxy API layer between Catalog UI and OpenShift API server. Handles auth, ordering, parameter validation, service listing, and admin operations.", crds:["CatalogItem","ResourceClaim (via API)"] },
+        { name:"agnosticv-operator", type:"Kopf (Python)", repo:"redhat-cop/babylon — agnosticv-operator/", purpose:"Clones/polls AgnosticV git repo (+ GitHub webhook server on port 8090); merges YAML hierarchy; creates & reconciles CatalogItem, ResourceProvider, and AnarchyGovernor CRs.", crds:["AgnosticVRepo","AgnosticVComponent","CatalogItem","ResourceProvider","AnarchyGovernor"] },
+        { name:"workshop-manager", type:"Kopf (Python)", repo:"redhat-cop/babylon — workshop-manager/", purpose:"Core orchestration operator for multi-user workshops. Creates per-user ResourceClaims from WorkshopProvision, manages user seat assignment/rotation, and orchestrates multi-workshop events.", crds:["Workshop","WorkshopProvision","WorkshopUserAssignment","MultiWorkshop"] },
+        { name:"notifier", type:"Kopf + SMTP + Redis", repo:"redhat-cop/babylon — notifier/", purpose:"Sends transactional emails for provisioning/retirement/start/stop lifecycle events using Jinja2/MJML templates. Uses a dedicated Redis sidecar to deduplicate notifications.", crds:["ResourceClaim (watch)","Workshop (watch)"] },
+        { name:"catalog-manager", type:"Kopf (Python)", repo:"redhat-cop/babylon — catalog-manager/", purpose:"Periodically (every 30 min) enriches CatalogItems with aggregate operational data: user ratings, disabled flag, and lastSuccessfulProvision timestamp.", crds:["CatalogItem"] },
+        { name:"service-access-manager", type:"Kopf (Python)", repo:"redhat-cop/babylon — service-access-manager/", purpose:"Manages RBAC granting users access to ResourceClaim/Workshop objects. Creates ServiceAccess records in each user's namespace. Reads UserNamespace CRs (from external UserNamespace operator) to discover user-owned namespaces.", crds:["ServiceAccess","ServiceAccessConfig","UserNamespace (read)","User (read)"] },
+        { name:"lab-ui-manager", type:"Kopf (Python)", repo:"redhat-cop/babylon — lab-ui-manager/", purpose:"Manages Bookbag lab-guide UI deployments for service instances. Watches ResourceClaims for bookbag flags and manages the full build→deploy lifecycle: BuildConfig, ImageStream, Deployment, Service, Route.", crds:["BookbagBuild","BookbagDeployment","ResourceClaim (watch)"] },
+        { name:"cost-tracker", type:"Kopf (Python)", repo:"redhat-cop/babylon — cost-tracker/", purpose:"Watches ResourceClaim events and annotates them with estimated AWS sandbox cost projections based on provision_data metadata.", crds:["ResourceClaim (watch only)"] },
+        { name:"Catalog Stack", type:"React + aiohttp + nginx + Redis + OAuth", repo:"redhat-cop/babylon — catalog/", purpose:"Set of stateless services: UI (React/PatternFly SPA), API (Python aiohttp proxy to OpenShift API), OAuth Proxy (OpenShift SSO/auth gate), Redis (session cache), Status (nginx health page). All run in babylon-catalog namespace.", crds:["CatalogItem (read)","ResourceClaim (read)","Workshop (read)"] },
+        { name:"Admin", type:"FastAPI + Vue.js + DB", repo:"redhat-cop/babylon — admin/", purpose:"Admin UI and API for incident/support management and ServiceNow reporting. DB-backed (PostgreSQL/MySQL). No CRDs.", crds:["— (DB-backed)"] },
+        { name:"Ratings", type:"FastAPI + DB", repo:"redhat-cop/babylon — ratings/", purpose:"Stores and serves user ratings for catalog items. Consumed by catalog-manager to enrich CatalogItem metadata. No CRDs.", crds:["— (DB-backed)"] },
+        { name:"Poolboy", type:"Go operator (external)", repo:"redhat-cop/poolboy", purpose:"Resource broker: matches ResourceClaims to ResourceHandles (or ResourcePools for pre-provisioned envs). Creates AnarchySubjects when bound.", crds:["ResourceProvider","ResourceClaim","ResourceHandle","ResourcePool"] },
+        { name:"Anarchy", type:"Go operator (external)", repo:"redhat-cop/anarchy", purpose:"Event-driven Ansible action runner. Watches AnarchySubjects for state changes and runs AnarchyActions (provision/start/stop/destroy/status) via AnarchyRuns on runner pods.", crds:["AnarchyGovernor","AnarchySubject","AnarchyAction","AnarchyRun"] },
+        { name:"UserNamespace Operator", type:"Operator (external)", repo:"rhpds/usernamespace", purpose:"Provisions and manages a personal namespace for each OpenShift user. Each user gets a UserNamespace CR. service-access-manager reads these to discover user-owned namespaces and grant RBAC for ResourceClaim/Workshop access.", crds:["UserNamespace"] },
       ];
       document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('operators-container');
@@ -396,6 +399,26 @@ flowchart TD
           <tr><td>ServiceAccessConfig</td><td>service-access-manager</td><td>Policy configuration for service access control.</td></tr>
           <tr><td>BookbagBuild</td><td>lab-ui-manager</td><td>Triggers an OpenShift build for a Bookbag lab UI image from a git repository.</td></tr>
           <tr><td>BookbagDeployment</td><td>lab-ui-manager</td><td>Deploys a Bookbag image into the service namespace with provision_data variables.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>usernamespace.gpte.redhat.com — UserNamespace operator (external)</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>CRD</th><th>Managed by</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>UserNamespace</td><td>UserNamespace operator (external)</td><td>Personal OpenShift namespace for each user. Read by service-access-manager to discover user-owned namespaces and grant RBAC for ResourceClaim/Workshop objects.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>user.openshift.io — OpenShift built-in</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>CRD</th><th>Managed by</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>User</td><td>OpenShift</td><td>Standard OpenShift User object. Read (not managed) by service-access-manager to resolve user identity for RBAC grants.</td></tr>
         </tbody>
       </table>
     </div>

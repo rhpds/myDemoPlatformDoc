@@ -203,3 +203,33 @@ Triggers an OpenShift build for a Bookbag lab UI image from a git repository.
 ### BookbagDeployment
 
 Deploys a previously-built Bookbag image into the service namespace with the correct `provision_data` variables.
+
+---
+
+## `usernamespace.gpte.redhat.com` — UserNamespace operator (external)
+
+### UserNamespace
+
+Represents a personal OpenShift namespace provisioned for a specific user. Managed by the external **UserNamespace operator** (`rhpds/usernamespace`).
+
+`service-access-manager` reads `UserNamespace` CRs to discover each user's personal namespace and create the appropriate `ServiceAccess` records and RBAC bindings granting access to `ResourceClaim` and `Workshop` objects.
+
+```yaml
+apiVersion: usernamespace.gpte.redhat.com/v1
+kind: UserNamespace
+metadata:
+  name: user-djana
+spec:
+  user:
+    name: djana
+status:
+  namespaceName: user-djana
+```
+
+---
+
+## `user.openshift.io` — OpenShift built-in
+
+### User
+
+Standard OpenShift `User` object. Read (not managed) by `service-access-manager` to resolve user identity when granting RBAC for catalog resources.
