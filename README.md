@@ -133,6 +133,6 @@ flowchart TD
 
 
 ## Knowledge Transfer Meeting Recording:
-[Babylon - OpenShift orchestration that powers RHDP - 2026/06/04 21:00 IST - Recording](https://drive.google.com/file/d/1rivmVOdPl3YyWMmxirVHEzX-dvQkjIiA/view)
-[Babylon API and UI - 2026/06/24 20:04 IST - Recording](https://drive.google.com/file/d/1Spqdp8cgLvSUt1wFaAgiu-t2P0mxyteI/view)
-[Babylon ArgoCD configuration and maintenance  - 2026/07/14 19:59 IST - Recording](https://drive.google.com/file/d/18HoaROQp1RdO-JVaQd1dLOb0zydqm5Tm/view)
+- [Babylon - OpenShift orchestration that powers RHDP - 2026/06/04 21:00 IST - Recording](https://drive.google.com/file/d/1rivmVOdPl3YyWMmxirVHEzX-dvQkjIiA/view)
+- [Babylon API and UI - 2026/06/24 20:04 IST - Recording](https://drive.google.com/file/d/1Spqdp8cgLvSUt1wFaAgiu-t2P0mxyteI/view)
+- [Babylon ArgoCD configuration and maintenance  - 2026/07/14 19:59 IST - Recording](https://drive.google.com/file/d/18HoaROQp1RdO-JVaQd1dLOb0zydqm5Tm/view)
