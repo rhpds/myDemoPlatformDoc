@@ -133,24 +133,6 @@ flowchart TD
 
 
 ## Knowledge Transfer Meeting Recording:
-<iframe width="560" height="315" 
-        src="[Babylon - OpenShift orchestration that powers RHDP - 2026/06/04 21:00 IST - Recording](https://drive.google.com/file/d/1rivmVOdPl3YyWMmxirVHEzX-dvQkjIiA/view)" 
-        title="YouTube video player" 
-        frameborder="0" 
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-        allowfullscreen>
-</iframe>
-<iframe width="560" height="315" 
-        src="[Babylon API and UI - 2026/06/24 20:04 IST - Recording](https://drive.google.com/file/d/1Spqdp8cgLvSUt1wFaAgiu-t2P0mxyteI/view)" 
-        title="YouTube video player" 
-        frameborder="0" 
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-        allowfullscreen>
-</iframe>
-<iframe width="560" height="315" 
-        src="[Babylon ArgoCD configuration and maintenance  - 2026/07/14 19:59 IST - Recording](https://drive.google.com/file/d/18HoaROQp1RdO-JVaQd1dLOb0zydqm5Tm/view)" 
-        title="YouTube video player" 
-        frameborder="0" 
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-        allowfullscreen>
-</iframe>
+<iframe width="560" height="315" src="[Babylon - OpenShift orchestration that powers RHDP - 2026/06/04 21:00 IST - Recording](https://drive.google.com/file/d/1rivmVOdPl3YyWMmxirVHEzX-dvQkjIiA/view)" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="560" height="315" src="[Babylon API and UI - 2026/06/24 20:04 IST - Recording](https://drive.google.com/file/d/1Spqdp8cgLvSUt1wFaAgiu-t2P0mxyteI/view)" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="560" height="315" src="[Babylon ArgoCD configuration and maintenance  - 2026/07/14 19:59 IST - Recording](https://drive.google.com/file/d/18HoaROQp1RdO-JVaQd1dLOb0zydqm5Tm/view)" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
